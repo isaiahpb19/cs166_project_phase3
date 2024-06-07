@@ -35,6 +35,7 @@ public class GameRental {
 
    // reference to physical database connection.
    private Connection _connection = null;
+   String loginUser = "";
 
    // handling the keyboard inputs through a BufferedReader
    // This variable can be global for convenience.
@@ -265,6 +266,7 @@ public class GameRental {
                default : System.out.println("Unrecognized choice!"); break;
             }//end switch
             if (authorisedUser != null) {
+               esql.loginUser = authorisedUser;
               boolean usermenu = true;
               while(usermenu) {
                 System.out.println("MAIN MENU");
@@ -473,7 +475,21 @@ public class GameRental {
 
 // Rest of the functions definition go in here
 
-   public static void viewProfile(GameRental esql) {}
+   public static void viewProfile(GameRental esql) {
+      String sql = "SELECT phoneNum, numOverDueGames, favGames FROM Users WHERE login = '"+ esql.loginUser+"';";
+      List<List<String>> items;
+      try {
+         items = esql.executeQueryAndReturnResult(sql);
+         if (items.size() > 1) throw new Exception("uh oh");
+      } catch (Exception e) {
+         System.out.println("Something went wrong.\n");
+         return;
+      }
+      System.out.println(new String("Phone Number: "+items.get(0).get(0)));
+      System.out.println(new String("Number of Overdue Games: "+items.get(0).get(1)));
+      System.out.println(new String("Favourite Games: \n"+items.get(0).get(2)));
+
+   }
    public static void updateProfile(GameRental esql) {}
    
    public static void viewCatalog(GameRental esql) {
