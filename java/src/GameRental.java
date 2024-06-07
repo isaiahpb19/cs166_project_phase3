@@ -443,7 +443,32 @@ public class GameRental {
     * @return User login or null is the user does not exist
     **/
    public static String LogIn(GameRental esql){
-      return null;
+      Scanner reader = new Scanner(System.in);  
+      String username;
+      String password;
+      System.out.print("Enter username:");
+      username = reader.next();
+      System.out.print("Enter password:");
+      password = reader.next();
+      
+      String sql = "SELECT * FROM USERS WHERE login = '" +username+"' AND password = '"+password+"';";
+      try {
+         if ( esql.executeQuery(sql) > 0) {
+            System.out.print("Log In Success.\n");
+            return username;
+         }
+         else {
+            System.out.print("Incorrect login or password\n");
+            return null;
+         }
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+         return null;
+      }
+      
+
+
+      // return null;
    }//end
 
 // Rest of the functions definition go in here
