@@ -475,7 +475,45 @@ public class GameRental {
 
    public static void viewProfile(GameRental esql) {}
    public static void updateProfile(GameRental esql) {}
-   public static void viewCatalog(GameRental esql) {}
+   
+   public static void viewCatalog(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String genre;
+      String min_price;
+      String max_price;
+      Boolean sort;
+
+      String sql_genre;
+      String sql_min_price;
+      String sql_max_price;
+      String sql_sort;
+
+      System.out.println("Filter game by genre (press enter for no filter):");
+      genre = reader.nextLine();
+      System.out.println("Filter game by minimum price (press enter for no filter):");
+      min_price = reader.nextLine();
+      System.out.println("Filter game by maximum price (press enter for no filter):");
+      max_price = reader.nextLine();
+      System.out.println("Sort by:");
+      System.out.println("0. Increasing Price");
+      System.out.println("1. Decreasing Price");
+      sort = (readChoice() != 0);
+
+      sql_genre = genre.isEmpty() ? "TRUE" : "genre = '"+genre+"'";
+      sql_min_price = min_price.isEmpty() ? "TRUE" : "price >= '"+min_price+"'";
+      sql_max_price = max_price.isEmpty() ? "TRUE" : "price <= '"+max_price+"'";
+      sql_sort = sort ? "ORDER BY price DESC" : "ORDER BY price ASC";
+
+      String sql = "SELECT * FROM Catalog WHERE " + sql_genre + " AND " + sql_min_price + " AND " +sql_max_price + " " + sql_sort + ";";
+
+      try {
+         esql.executeQueryAndPrintResult(sql);
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+      }
+      
+   }
+
    public static void placeOrder(GameRental esql) {}
    public static void viewAllOrders(GameRental esql) {}
    public static void viewRecentOrders(GameRental esql) {}
