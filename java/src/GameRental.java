@@ -22,6 +22,7 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Scanner;
 import java.util.ArrayList;
 import java.lang.Math;
 
@@ -354,6 +355,86 @@ public class GameRental {
     * Creates a new user
     **/
    public static void CreateUser(GameRental esql){
+      Scanner reader = new Scanner(System.in);  
+      String input;
+      String find_name;
+      String login;
+      String phone;
+      String pword;
+      // public int executeQuery (String query) throws SQLException
+
+      //get user name
+      do{
+         System.out.print("Please create a user_name (use only characters or numbers):\n");
+         input = reader.next();
+         find_name = "SELECT * FROM USERS WHERE login = '" +input+"';";
+
+         try {
+            if(!input.matches("[0-9a-zA-Z]+")) {
+               System.out.print("Use only characters or numbers!\n");
+            }
+            else if(esql.executeQuery(find_name)>0) {
+               System.out.print("This username is already used.\n");
+            }
+            else {
+               break;
+            }
+         } catch (Exception e) {
+            System.out.print("Something went wrong.\n");
+         }
+      } while(true);
+      login = input;
+
+      //get phone number
+      do {
+         System.out.print("Please add a phone number. Use the format +<country code>-xxx-xxx-xxxx.\n");
+         input = reader.next();
+         if(!input.matches("\\+[0-9]{1,5}\\-[0-9]{3}\\-[0-9]{3}\\-[0-9]{4}")) {
+            System.out.print("Input does not match format!\n");
+         }
+         else{
+            break;
+         }
+      }while(true);
+      phone = input;
+
+      //get pass word
+      String user_password;
+      do {
+         do {
+            System.out.print("Please enter a password. It must have the following:\n");
+            System.out.print("1. Password must be at least 15 and at most 30 characters.\n");
+            System.out.print("2. Password must contain only letters and numbers.\n");
+            System.out.print("3. Password must contain at least one lower case letter, one upper case letter, and a digit.\n");
+            System.out.print("Enter password: ");
+            input = reader.next();
+         }while(!check_password(input));
+         user_password = new String(input);
+         System.out.print("Please re-enter password: ");
+         input = reader.next();
+         if(!input.equals(user_password)) {
+            System.out.print("Passwords do not match!\n");
+         }
+         else {
+            break;
+         }
+
+      } while(true);
+      pword = input;
+
+      try {
+         // public void executeUpdate (String sql) throws SQLException
+         // INSERT INTO Students VALUES(860704039, 'George Haggerty', 3.67);
+         String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer',NULL,'"+phone+"',0);";
+         esql.executeUpdate(update);
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+         return;
+      }
+
+      System.out.print("Account created. Login using your username and password.\n");
+      // reader.close();
+
    }//end CreateUser
 
 
@@ -378,6 +459,43 @@ public class GameRental {
    public static void updateTrackingInfo(GameRental esql) {}
    public static void updateCatalog(GameRental esql) {}
    public static void updateUser(GameRental esql) {}
+
+
+   public static boolean check_password(String s) {
+      if(s.length() < 15) {
+         System.out.println("Password is too short.\n");
+         return false;
+      }
+      if(s.length() > 30) {
+         System.out.println("Password is too long.\n");
+         return false;
+      }
+      if(!s.matches("[a-zA-Z0-9]*")) {
+         System.out.println("Unexpected symbol.\n");
+         return false;
+      }
+      
+      boolean lower=false;
+      boolean upper=false;
+      boolean digit=false;
+      for(int i = 0; i < s.length();i++) {
+         char c = s.charAt(i);
+         lower = lower || (0x60 < c && c <= 0x7A);
+         upper = upper || (0x40 < c && c <= 0x5A);
+         digit = digit || (0x30 <= c && c <= 0x39);
+      }
+
+      if(!lower) {
+         System.out.println("Missing lower case letter.\n");
+      }
+      if(!upper) {
+         System.out.println("Missing upper case letter.\n");
+      }
+      if(!digit) {
+         System.out.println("Missing digit.\n");
+      }
+      return lower && upper && digit;
+   }
 
 
 }//end GameRental
