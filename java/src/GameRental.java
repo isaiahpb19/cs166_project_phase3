@@ -494,6 +494,7 @@ public class GameRental {
       System.out.println("Choose which entry to update:");
       System.out.println("1. Phone number");
       System.out.println("2. Favourite Games");
+      System.out.println("3. Password");
       int input = readChoice();
 
       switch(input) {
@@ -502,6 +503,9 @@ public class GameRental {
             break;
          case 2:
             change_fav_games(esql);
+            break;
+         case 3:
+            change_password(esql);
             break;
          default:
             System.out.println("Something went wrong.\n");
@@ -625,6 +629,56 @@ public class GameRental {
       try {
          esql.executeUpdate(sql);
          System.out.println("Favourite games updated.\n");
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+      }
+   }
+
+   public static void change_password(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String user_password;
+      String new_password;
+      do {
+         System.out.print("Enter old password: ");
+         user_password = reader.next();
+         String sql = "SELECT * FROM USERS WHERE login = '" +esql.loginUser+"' AND password = '"+user_password+"';";
+         try {
+            if ( esql.executeQuery(sql) > 0) {
+               break;
+            }
+            else {
+               System.out.print("Incorrect password\n");
+            }
+         } catch(Exception e) {
+            System.out.print("Something went wrong.\n");
+         }
+      } while(true);
+
+      do {
+         do {
+            System.out.print("Please enter a new password. It must have the following:\n");
+            System.out.print("1. Password must be at least 15 and at most 30 characters.\n");
+            System.out.print("2. Password must contain only letters and numbers.\n");
+            System.out.print("3. Password must contain at least one lower case letter, one upper case letter, and a digit.\n");
+            System.out.print("Enter password: ");
+            new_password = reader.next();
+         }while(!check_password(new_password));
+         user_password = new String(new_password);
+         System.out.print("Please re-enter password: ");
+         new_password = reader.next();
+         if(!new_password.equals(user_password)) {
+            System.out.print("Passwords do not match!\n");
+         }
+         else {
+            break;
+         }
+
+      } while(true);
+
+      String sql = "UPDATE Users SET password = '"+new_password+"' WHERE login = '"+esql.loginUser+"';";
+      try {
+         esql.executeUpdate(sql);
+         System.out.println("Password updated.\n");
       } catch(Exception e) {
          System.out.print("Something went wrong.\n");
       }
