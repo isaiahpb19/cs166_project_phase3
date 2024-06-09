@@ -490,7 +490,23 @@ public class GameRental {
       System.out.println(new String("Favourite Games: \n"+items.get(0).get(2)));
 
    }
-   public static void updateProfile(GameRental esql) {}
+   public static void updateProfile(GameRental esql) {
+      System.out.println("Choose which entry to update:");
+      System.out.println("1. Phone number");
+      System.out.println("2. Favourite Games");
+      int input = readChoice();
+
+      switch(input) {
+         case 1:
+            change_phone(esql);
+            break;
+         case 2:
+            change_fav_games(esql);
+            break;
+         default:
+            System.out.println("Something went wrong.\n");
+      }
+   }
    
    public static void viewCatalog(GameRental esql) {
       Scanner reader = new Scanner(System.in);
@@ -574,6 +590,44 @@ public class GameRental {
          System.out.println("Missing digit.\n");
       }
       return lower && upper && digit;
+   }
+
+   public static void change_phone(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String user_input;
+      do {
+         System.out.println("Please add a phone number. Use the format +<country code>-xxx-xxx-xxxx.");
+         user_input = reader.next();
+         if(!user_input.matches("\\+[0-9]{1,5}\\-[0-9]{3}\\-[0-9]{3}\\-[0-9]{4}")) {
+            System.out.println("Input does not match format!\n");
+         }
+         else{
+            break;
+         }
+      }while(true);
+
+      String sql = "UPDATE Users SET phoneNum = '"+user_input+"' WHERE login = '"+esql.loginUser+"';";
+      try {
+         esql.executeUpdate(sql);
+         System.out.println("Phone number updated.\n");
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+      }
+   }
+
+   public static void change_fav_games(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String user_input;
+      System.out.print("Please input favourite games here: ");
+      user_input = reader.next();
+
+      String sql = "UPDATE Users SET favGames = '"+user_input+"' WHERE login = '"+esql.loginUser+"';";
+      try {
+         esql.executeUpdate(sql);
+         System.out.println("Favourite games updated.\n");
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+      }
    }
 
 
