@@ -425,8 +425,6 @@ public class GameRental {
       pword = input;
 
       try {
-         // public void executeUpdate (String sql) throws SQLException
-         // INSERT INTO Students VALUES(860704039, 'George Haggerty', 3.67);
          String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer',NULL,'"+phone+"',0);";
          esql.executeUpdate(update);
       } catch(Exception e) {
@@ -550,7 +548,86 @@ public class GameRental {
       
    }
 
-   public static void placeOrder(GameRental esql) {}
+   public static void placeOrder(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String input;
+      List<String> game_id = new ArrayList<String>();
+      List<Integer> amount = new ArrayList<Integer>();
+      int acc = 0;
+      float total = 0;
+      do {
+         System.out.println("Please add a game id to order (press enter to continue):\n");
+         input = reader.nextLine();
+         if (input.equals("")) break;
+         String sql = "SELECT price FROM Catalog WHERE gameID = '"+input+"';";
+         List<List<String>> result;
+         try {
+            result = esql.executeQueryAndReturnResult(sql);
+         } catch (Exception e) {
+            System.out.println("Something went wrong. Code A\n");
+            continue;
+         }
+
+         if(game_id.contains(input)) {
+            System.out.println("Game already added.\n");
+         }
+         else if(result.size() <= 0) {
+            System.out.println("Game not in Catalog\n");
+         }
+         else {
+            game_id.add(input);
+            System.out.println("Add number of copies to order.\n");
+            int item = readChoice();
+            amount.add(item);
+            acc += item;
+            total += item*Float.valueOf(result.get(0).get(0));
+         }
+      } while(true);
+
+      // String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer',NULL,'"+phone+"',0);";
+
+      String order_sql = "INSERT INTO RentalOrder VALUES(null, '"+esql.loginUser+"',"+Integer.toString(acc)+","+String.format("%.2f", total)+",null,null);";
+      try {
+         esql.executeUpdate(order_sql);
+      } catch(Exception e) {
+         System.out.println("Something went wrong. Code B.");
+         System.out.println(e.getMessage());
+         return;
+      }
+      String order_id = get_order_id(esql);
+      String track_sql = "INSERT INTO TrackingInfo VALUES(null,'"+order_id+"','OrderReceived','Phoenix,AZ','USPS',null,'');";
+      try {
+         esql.executeUpdate(track_sql);
+      } catch(Exception e) {
+         System.out.println(e.getMessage());
+         System.out.println("Something went wrong. Code C.");
+         return;
+      }
+
+      for(int i = 0; i < game_id.size(); i++) {
+         String cur_id = game_id.get(i);
+         int cur_am = amount.get(i);
+         String game_sql = "INSERT INTO GamesInOrder VALUES('"+order_id+"','"+cur_id+"',"+Integer.toString(cur_am)+");";
+         try {
+            esql.executeUpdate(game_sql);
+         } catch(Exception e) {
+            System.out.println("Something went wrong. Code D.");
+            return;
+         }
+      }
+
+      String track_id = get_track_id(esql);
+      System.out.println("Order complete!");
+      System.out.print("Order ID: ");
+      System.out.println(order_id);
+      System.out.print("Tracking ID: ");
+      System.out.println(track_id);
+      System.out.print("Total units ordered: ");
+      System.out.println(Integer.toString(acc));
+      System.out.print("Total price: ");
+      System.out.println(String.format("%.2f", total));
+      System.out.println();
+   }
    public static void viewAllOrders(GameRental esql) {}
    public static void viewRecentOrders(GameRental esql) {}
    public static void viewOrderInfo(GameRental esql) {}
@@ -682,6 +759,26 @@ public class GameRental {
       } catch(Exception e) {
          System.out.print("Something went wrong.\n");
       }
+   }
+
+   public static String get_order_id(GameRental esql) {
+      List<List<String>> temp;
+      try {
+         temp = esql.executeQueryAndReturnResult("SELECT last_value FROM order_seq;");
+      } catch(Exception e) {
+         return "";
+      }
+      return "gamerentalorder"+temp.get(0).get(0);
+   }
+
+   public static String get_track_id(GameRental esql) {
+      List<List<String>>  temp;
+      try {
+         temp = esql.executeQueryAndReturnResult("SELECT last_value FROM track_seq;");
+      } catch(Exception e) {
+         return "";
+      }
+      return "trackingid"+temp.get(0).get(0);
    }
 
 
