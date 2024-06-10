@@ -62,7 +62,7 @@ public class GameRental {
 
          // obtain a physical connection
          this._connection = DriverManager.getConnection(url, user, passwd);
-         System.out.println("Done");
+         System.out.println("Done\n");
       }catch (Exception e){
          System.err.println("Error - Unable to Connect to Database: " + e.getMessage() );
          System.out.println("Make sure you started postgres on this machine");
@@ -330,7 +330,10 @@ public class GameRental {
    public static void Greeting(){
       System.out.println(
          "\n\n*******************************************************\n" +
-         "              User Interface      	               \n" +
+         "*                                                     *\n" +
+         "*                       RE:Game      	              *\n" + 
+         "*          By: Sunny Atalig & Isaiah Bernardino       *\n" +
+         "*                                                     *\n" +
          "*******************************************************\n");
    }//end Greeting
 
@@ -345,6 +348,7 @@ public class GameRental {
          System.out.print("Please make your choice: ");
          try { // read the integer, parse it and break.
             input = Integer.parseInt(in.readLine());
+            System.out.println("");
             break;
          }catch (Exception e) {
             System.out.println("Your input is invalid!");
@@ -455,7 +459,7 @@ public class GameRental {
       String sql = "SELECT * FROM USERS WHERE login = '" +username+"' AND password = '"+password+"';";
       try {
          if ( esql.executeQuery(sql) > 0) {
-            System.out.print("Log In Success.\n");
+            System.out.print("Log In Success.\n\n");
             return username;
          }
          else {
@@ -484,12 +488,16 @@ public class GameRental {
          System.out.println("Something went wrong.\n");
          return;
       }
-      System.out.println(new String("Phone Number: "+items.get(0).get(0)));
-      System.out.println(new String("Number of Overdue Games: "+items.get(0).get(1)));
-      System.out.println(new String("Favourite Games: \n"+items.get(0).get(2)));
-
+      for(int i = 0; i < items.get(0).get(2).length()+13; i++) System.out.print("-");
+      System.out.println("\n          Profile\n");
+      System.out.println(new String("* Phone Number: "+items.get(0).get(0)));
+      System.out.println(new String("* Number of Overdue Games: "+items.get(0).get(1)));
+      System.out.println(new String("* Favourite Games: "+items.get(0).get(2)));
+      for(int i = 0; i < items.get(0).get(2).length()+13; i++) System.out.print("-");
+      System.out.println("\n");
    }
    public static void updateProfile(GameRental esql) {
+      System.out.println("------------------------------------------\n");
       System.out.println("Choose which entry to update:");
       System.out.println("1. Phone number");
       System.out.println("2. Favourite Games");
@@ -499,12 +507,15 @@ public class GameRental {
       switch(input) {
          case 1:
             change_phone(esql);
+            System.out.println("------------------------------------------\n");
             break;
          case 2:
             change_fav_games(esql);
+            System.out.println("------------------------------------------\n");
             break;
          case 3:
             change_password(esql);
+            System.out.println("------------------------------------------\n");
             break;
          default:
             System.out.println("Something went wrong.\n");
@@ -523,6 +534,7 @@ public class GameRental {
       String sql_max_price;
       String sql_sort;
 
+      System.out.println("-------------------------------------------------------------\n");
       System.out.println("Filter game by genre (press enter for no filter):");
       genre = reader.nextLine();
       System.out.println("Filter game by minimum price (press enter for no filter):");
@@ -543,6 +555,7 @@ public class GameRental {
 
       try {
          esql.executeQueryAndPrintResult(sql);
+         System.out.println("-------------------------------------------------------------\n");
       } catch(Exception e) {
          System.out.print("Something went wrong.\n");
       }
@@ -557,6 +570,7 @@ public class GameRental {
       int acc = 0;
       float total = 0;
       do {
+         System.out.println("--------------------------------------------------------------\n");
          System.out.println("Please add a game id to order (press enter to continue):\n");
          input = reader.nextLine();
          if (input.equals("")) break;
@@ -627,7 +641,7 @@ public class GameRental {
       System.out.println(Integer.toString(acc));
       System.out.print("Total price: ");
       System.out.println(String.format("%.2f", total));
-      System.out.println();
+      System.out.println("--------------------------------------------------------------\n");
    }
    public static void viewAllOrders(GameRental esql) {
       List<List<String>> result;
