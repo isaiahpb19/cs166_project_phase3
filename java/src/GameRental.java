@@ -35,6 +35,7 @@ public class GameRental {
 
    // reference to physical database connection.
    private Connection _connection = null;
+   String loginUser = "";
 
    // handling the keyboard inputs through a BufferedReader
    // This variable can be global for convenience.
@@ -265,6 +266,7 @@ public class GameRental {
                default : System.out.println("Unrecognized choice!"); break;
             }//end switch
             if (authorisedUser != null) {
+               esql.loginUser = authorisedUser;
               boolean usermenu = true;
               while(usermenu) {
                 System.out.println("MAIN MENU");
@@ -423,8 +425,6 @@ public class GameRental {
       pword = input;
 
       try {
-         // public void executeUpdate (String sql) throws SQLException
-         // INSERT INTO Students VALUES(860704039, 'George Haggerty', 3.67);
          String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer',NULL,'"+phone+"',0);";
          esql.executeUpdate(update);
       } catch(Exception e) {
@@ -443,22 +443,227 @@ public class GameRental {
     * @return User login or null is the user does not exist
     **/
    public static String LogIn(GameRental esql){
-      return null;
+      Scanner reader = new Scanner(System.in);  
+      String username;
+      String password;
+      System.out.print("Enter username:");
+      username = reader.next();
+      System.out.print("Enter password:");
+      password = reader.next();
+      
+      String sql = "SELECT * FROM USERS WHERE login = '" +username+"' AND password = '"+password+"';";
+      try {
+         if ( esql.executeQuery(sql) > 0) {
+            System.out.print("Log In Success.\n");
+            return username;
+         }
+         else {
+            System.out.print("Incorrect login or password\n");
+            return null;
+         }
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+         return null;
+      }
+      
+
+
+      // return null;
    }//end
 
 // Rest of the functions definition go in here
 
-   public static void viewProfile(GameRental esql) {}
-   public static void updateProfile(GameRental esql) {}
-   public static void viewCatalog(GameRental esql) {}
-   public static void placeOrder(GameRental esql) {}
+   public static void viewProfile(GameRental esql) {
+      String sql = "SELECT phoneNum, numOverDueGames, favGames FROM Users WHERE login = '"+ esql.loginUser+"';";
+      List<List<String>> items;
+      try {
+         items = esql.executeQueryAndReturnResult(sql);
+         if (items.size() > 1) throw new Exception("uh oh");
+      } catch (Exception e) {
+         System.out.println("Something went wrong.\n");
+         return;
+      }
+      System.out.println(new String("Phone Number: "+items.get(0).get(0)));
+      System.out.println(new String("Number of Overdue Games: "+items.get(0).get(1)));
+      System.out.println(new String("Favourite Games: \n"+items.get(0).get(2)));
+
+   }
+   public static void updateProfile(GameRental esql) {
+      System.out.println("Choose which entry to update:");
+      System.out.println("1. Phone number");
+      System.out.println("2. Favourite Games");
+      System.out.println("3. Password");
+      int input = readChoice();
+
+      switch(input) {
+         case 1:
+            change_phone(esql);
+            break;
+         case 2:
+            change_fav_games(esql);
+            break;
+         case 3:
+            change_password(esql);
+            break;
+         default:
+            System.out.println("Something went wrong.\n");
+      }
+   }
+   
+   public static void viewCatalog(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String genre;
+      String min_price;
+      String max_price;
+      Boolean sort;
+
+      String sql_genre;
+      String sql_min_price;
+      String sql_max_price;
+      String sql_sort;
+
+      System.out.println("Filter game by genre (press enter for no filter):");
+      genre = reader.nextLine();
+      System.out.println("Filter game by minimum price (press enter for no filter):");
+      min_price = reader.nextLine();
+      System.out.println("Filter game by maximum price (press enter for no filter):");
+      max_price = reader.nextLine();
+      System.out.println("Sort by:");
+      System.out.println("0. Increasing Price");
+      System.out.println("1. Decreasing Price");
+      sort = (readChoice() != 0);
+
+      sql_genre = genre.isEmpty() ? "TRUE" : "genre = '"+genre+"'";
+      sql_min_price = min_price.isEmpty() ? "TRUE" : "price >= '"+min_price+"'";
+      sql_max_price = max_price.isEmpty() ? "TRUE" : "price <= '"+max_price+"'";
+      sql_sort = sort ? "ORDER BY price DESC" : "ORDER BY price ASC";
+
+      String sql = "SELECT * FROM Catalog WHERE " + sql_genre + " AND " + sql_min_price + " AND " +sql_max_price + " " + sql_sort + ";";
+
+      try {
+         esql.executeQueryAndPrintResult(sql);
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+      }
+      
+   }
+
+   public static void placeOrder(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String input;
+      List<String> game_id = new ArrayList<String>();
+      List<Integer> amount = new ArrayList<Integer>();
+      int acc = 0;
+      float total = 0;
+      do {
+         System.out.println("Please add a game id to order (press enter to continue):\n");
+         input = reader.nextLine();
+         if (input.equals("")) break;
+         String sql = "SELECT price FROM Catalog WHERE gameID = '"+input+"';";
+         List<List<String>> result;
+         try {
+            result = esql.executeQueryAndReturnResult(sql);
+         } catch (Exception e) {
+            System.out.println("Something went wrong. Code A\n");
+            continue;
+         }
+
+         if(game_id.contains(input)) {
+            System.out.println("Game already added.\n");
+         }
+         else if(result.size() <= 0) {
+            System.out.println("Game not in Catalog\n");
+         }
+         else {
+            game_id.add(input);
+            System.out.println("Add number of copies to order.\n");
+            int item = readChoice();
+            amount.add(item);
+            acc += item;
+            total += item*Float.valueOf(result.get(0).get(0));
+         }
+      } while(true);
+
+      // String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer',NULL,'"+phone+"',0);";
+
+      String order_sql = "INSERT INTO RentalOrder VALUES(null, '"+esql.loginUser+"',"+Integer.toString(acc)+","+String.format("%.2f", total)+",null,null);";
+      try {
+         esql.executeUpdate(order_sql);
+      } catch(Exception e) {
+         System.out.println("Something went wrong. Code B.");
+         System.out.println(e.getMessage());
+         return;
+      }
+      String order_id = get_order_id(esql);
+      String track_sql = "INSERT INTO TrackingInfo VALUES(null,'"+order_id+"','OrderReceived','Phoenix,AZ','USPS',null,'');";
+      try {
+         esql.executeUpdate(track_sql);
+      } catch(Exception e) {
+         System.out.println(e.getMessage());
+         System.out.println("Something went wrong. Code C.");
+         return;
+      }
+
+      for(int i = 0; i < game_id.size(); i++) {
+         String cur_id = game_id.get(i);
+         int cur_am = amount.get(i);
+         String game_sql = "INSERT INTO GamesInOrder VALUES('"+order_id+"','"+cur_id+"',"+Integer.toString(cur_am)+");";
+         try {
+            esql.executeUpdate(game_sql);
+         } catch(Exception e) {
+            System.out.println("Something went wrong. Code D.");
+            return;
+         }
+      }
+
+      String track_id = get_track_id(esql);
+      System.out.println("Order complete!");
+      System.out.print("Order ID: ");
+      System.out.println(order_id);
+      System.out.print("Tracking ID: ");
+      System.out.println(track_id);
+      System.out.print("Total units ordered: ");
+      System.out.println(Integer.toString(acc));
+      System.out.print("Total price: ");
+      System.out.println(String.format("%.2f", total));
+      System.out.println();
+   }
    public static void viewAllOrders(GameRental esql) {}
    public static void viewRecentOrders(GameRental esql) {}
    public static void viewOrderInfo(GameRental esql) {}
    public static void viewTrackingInfo(GameRental esql) {}
    public static void updateTrackingInfo(GameRental esql) {}
    public static void updateCatalog(GameRental esql) {}
-   public static void updateUser(GameRental esql) {}
+   public static void updateUser(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String check = "SELECT * FROM Users WHERE login='"+esql.loginUser+"' AND role='manager';";
+      try{
+         if(esql.executeQuery(check) <=0) {
+            System.out.println("Unauthorized user.\n");
+            return;
+         }
+      } catch(Exception e) {
+         System.out.println("Something went wrong.\n");
+         return;
+      }
+      System.out.println("Choose option:");
+      System.out.println("1. View all User IDs");
+      System.out.println("2. Update user");
+      int input = readChoice();
+
+      switch(input) {
+         case 1:
+         viewAllUsers(esql);
+         break;
+            
+         case 2: 
+         userUpdateInfo(esql);
+         break;
+         default:
+         System.out.println("Invalid option.");
+      }
+      
+   }
 
 
    public static boolean check_password(String s) {
@@ -495,6 +700,266 @@ public class GameRental {
          System.out.println("Missing digit.\n");
       }
       return lower && upper && digit;
+   }
+
+   public static void change_phone(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String user_input;
+      do {
+         System.out.println("Please add a phone number. Use the format +<country code>-xxx-xxx-xxxx.");
+         user_input = reader.next();
+         if(!user_input.matches("\\+[0-9]{1,5}\\-[0-9]{3}\\-[0-9]{3}\\-[0-9]{4}")) {
+            System.out.println("Input does not match format!\n");
+         }
+         else{
+            break;
+         }
+      }while(true);
+
+      String sql = "UPDATE Users SET phoneNum = '"+user_input+"' WHERE login = '"+esql.loginUser+"';";
+      try {
+         esql.executeUpdate(sql);
+         System.out.println("Phone number updated.\n");
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+      }
+   }
+
+   public static void change_fav_games(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String user_input;
+      System.out.print("Please input favourite games here: ");
+      user_input = reader.next();
+
+      String sql = "UPDATE Users SET favGames = '"+user_input+"' WHERE login = '"+esql.loginUser+"';";
+      try {
+         esql.executeUpdate(sql);
+         System.out.println("Favourite games updated.\n");
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+      }
+   }
+
+   public static void change_password(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String user_password;
+      String new_password;
+      do {
+         System.out.print("Enter old password: ");
+         user_password = reader.next();
+         String sql = "SELECT * FROM USERS WHERE login = '" +esql.loginUser+"' AND password = '"+user_password+"';";
+         try {
+            if ( esql.executeQuery(sql) > 0) {
+               break;
+            }
+            else {
+               System.out.print("Incorrect password\n");
+            }
+         } catch(Exception e) {
+            System.out.print("Something went wrong.\n");
+         }
+      } while(true);
+
+      do {
+         do {
+            System.out.print("Please enter a new password. It must have the following:\n");
+            System.out.print("1. Password must be at least 15 and at most 30 characters.\n");
+            System.out.print("2. Password must contain only letters and numbers.\n");
+            System.out.print("3. Password must contain at least one lower case letter, one upper case letter, and a digit.\n");
+            System.out.print("Enter password: ");
+            new_password = reader.next();
+         }while(!check_password(new_password));
+         user_password = new String(new_password);
+         System.out.print("Please re-enter password: ");
+         new_password = reader.next();
+         if(!new_password.equals(user_password)) {
+            System.out.print("Passwords do not match!\n");
+         }
+         else {
+            break;
+         }
+
+      } while(true);
+
+      String sql = "UPDATE Users SET password = '"+new_password+"' WHERE login = '"+esql.loginUser+"';";
+      try {
+         esql.executeUpdate(sql);
+         System.out.println("Password updated.\n");
+      } catch(Exception e) {
+         System.out.print("Something went wrong.\n");
+      }
+   }
+
+   public static String get_order_id(GameRental esql) {
+      List<List<String>> temp;
+      try {
+         temp = esql.executeQueryAndReturnResult("SELECT last_value FROM order_seq;");
+      } catch(Exception e) {
+         return "";
+      }
+      return "gamerentalorder"+temp.get(0).get(0);
+   }
+
+   public static String get_track_id(GameRental esql) {
+      List<List<String>>  temp;
+      try {
+         temp = esql.executeQueryAndReturnResult("SELECT last_value FROM track_seq;");
+      } catch(Exception e) {
+         return "";
+      }
+      return "trackingid"+temp.get(0).get(0);
+   }
+   public static void viewAllUsers(GameRental esql) {
+      String sql = "SELECT login FROM Users";
+      try{
+         esql.executeQueryAndPrintResult(sql);
+      } catch(Exception e) {
+         System.out.println("Something went wrong.\n");
+      }
+      System.out.println("");
+   }
+   public static void userUpdateInfo(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      System.out.println("Enter user id you wish to update:");
+      String id = reader.nextLine();
+      String sql = "SELECT * FROM Users WHERE login='"+id+"';";
+      List<List<String>> user_info = null;
+      try{
+         user_info = esql.executeQueryAndReturnResult(sql);
+
+         if(user_info.size() <= 0) {
+            System.out.println("No user matches this id.\n");
+            return;
+         }
+      } catch(Exception e) {
+         System.out.println("Something went wrong.\n");
+         return;
+      }
+      System.out.println(new String ("Login: " + user_info.get(0).get(0)));
+      System.out.println(new String("password: " + user_info.get(0).get(1)));
+      System.out.println(new String("role: "+ user_info.get(0).get(2)));
+      System.out.println(new String("favGames: " + user_info.get(0).get(3)));
+      System.out.println(new String("phoneNum: " + user_info.get(0).get(4)));
+      System.out.println(new String("numOverDueGames: " + user_info.get(0).get(5)));
+      // login varchar(50) NOT NULL,
+      // password varchar(30) NOT NULL,
+      // role char(20) NOT NULL,
+      // favGames text,
+      // phoneNum varchar(20) NOT NULL,
+      // numOverDueGames integer DEFAULT 0
+
+      int choice = 0;
+      do {
+         System.out.println("Choose which item to update");
+         System.out.println("1. login (depreciated)");
+         System.out.println("2. password");
+         System.out.println("3. role");
+         System.out.println("4. faveGames");
+         System.out.println("5. phoneNum");
+         System.out.println("6. numOverDueGames");
+         System.out.println("0. exit");
+         choice = readChoice();
+
+         String update;
+         switch(choice) {
+            case 1:
+            // System.out.println("Enter new login");
+            // String input = reader.nextLine();
+            // String check = "SELECT * FROM Users WHERE login='"+input+"';";
+            // update = "UPDATE Users SET login = '"+input+"' WHERE login = '"+id+"';";
+            // try {
+            //    if(esql.executeQuery(check) > 0) {
+            //       System.out.println("user id already exists.\n");
+            //    }
+            //    else {
+            //       esql.executeUpdate(update);
+            //       System.out.println("login updated");
+            //    }
+            // } catch(Exception e) {
+            //    System.out.println("Something went wrong.");
+            // }
+            break;
+
+            case 2:
+            System.out.println("Enter new password");
+            String input1 = reader.nextLine();
+            // String check = "SELECT * FROM Users WHERE login='"+input+"';";
+            update = "UPDATE Users SET password = '"+input1+"' WHERE login = '"+id+"';";
+            try {
+               esql.executeUpdate(update);
+               System.out.println("passord updated.");
+            } catch(Exception e) {
+               System.out.println("Something went wrong.");
+            }
+            break;
+
+            case 3:
+            System.out.println("Enter new role");
+            String input2 = reader.nextLine();
+            update = "UPDATE Users SET role = '"+input2+"' WHERE login = '"+id+"';";
+            try {
+               esql.executeUpdate(update);
+               System.out.println("role updated.");
+            } catch(Exception e) {
+               System.out.println("Something went wrong.");
+            }
+            break;
+
+            case 4:
+            System.out.println("Enter new favGames");
+            String input3 = reader.nextLine();
+            update = "UPDATE Users SET favGames = '"+input3+"' WHERE login = '"+id+"';";
+            try {
+               esql.executeUpdate(update);
+               System.out.println("favGames updated.");
+            } catch(Exception e) {
+               System.out.println("Something went wrong.");
+            }
+            break;
+
+            case 5:
+            String input4;
+            do {
+               System.out.print("Enter a new phone number. Use the format +<country code>-xxx-xxx-xxxx.\n");
+               input4 = reader.nextLine();
+               if(!input4.matches("\\+[0-9]{1,5}\\-[0-9]{3}\\-[0-9]{3}\\-[0-9]{4}")) {
+                  System.out.print("Input does not match format!\n");
+               }
+               else{
+                  break;
+               }
+            }while(true);
+            
+            update = "UPDATE Users SET phoneNum = '"+input4+"' WHERE login = '"+id+"';";
+            try {
+               esql.executeUpdate(update);
+               System.out.println("phone number updated.");
+            } catch(Exception e) {
+               System.out.println("Something went wrong.");
+            }
+            break;
+
+            case 6:
+            System.out.println("Enter new number of overdue games:");
+            int input5 = readChoice();
+            update = "UPDATE Users SET numOverDueGames = '"+Integer.toString(input5)+"' WHERE login = '"+id+"';";
+            try {
+               esql.executeUpdate(update);
+               System.out.println("numOverDueGames updated.");
+            } catch(Exception e) {
+               System.out.println("Something went wrong.");
+            }
+            break;
+
+            case 0:
+            System.out.println("Exiting....\n");
+
+            default:
+            System.out.println("Invalid choice.\n");
+            break;
+         }
+      } while(choice != 0);
+
    }
 
 
