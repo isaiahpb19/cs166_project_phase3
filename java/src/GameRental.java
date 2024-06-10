@@ -446,9 +446,9 @@ public class GameRental {
       Scanner reader = new Scanner(System.in);  
       String username;
       String password;
-      System.out.print("Enter username:");
+      System.out.print("Enter username: ");
       username = reader.next();
-      System.out.print("Enter password:");
+      System.out.print("Enter password: ");
       password = reader.next();
       
       String sql = "SELECT * FROM USERS WHERE login = '" +username+"' AND password = '"+password+"';";
@@ -628,8 +628,46 @@ public class GameRental {
       System.out.println(String.format("%.2f", total));
       System.out.println();
    }
-   public static void viewAllOrders(GameRental esql) {}
-   public static void viewRecentOrders(GameRental esql) {}
+   public static void viewAllOrders(GameRental esql) {
+      List<List<String>> result;
+      try{
+         System.out.println("\n-------------------------------");
+         System.out.println("Order history\n");
+         String query = "SELECT rentalOrderID FROM RentalOrder WHERE login='"+esql.loginUser+"';";
+               // String check = "SELECT * FROM Users WHERE login='"+esql.loginUser+"' AND role='manager';";
+
+         result = esql.executeQueryAndReturnResult(query);
+         if (result.size() <= 0) {    
+            System.out.println("No orders made"); 
+         } 
+         else {
+            for (int i=0; i<=result.size()-1; ++i) System.out.println("> " + result.get(i).get(0));
+            System.out.println("-------------------------------\n");
+         }
+      } catch(Exception e) {
+         System.err.println (e.getMessage());
+      }
+   }
+   public static void viewRecentOrders(GameRental esql) {
+      List<List<String>> result;
+      try{
+         System.out.println("\n-------------------------------");
+         System.out.println("Recent orders\n");
+         String query = "SELECT rentalOrderID FROM RentalOrder WHERE login='"+esql.loginUser+"' ORDER BY orderTimestamp DESC;";
+               // String check = "SELECT * FROM Users WHERE login='"+esql.loginUser+"' AND role='manager';";
+
+         result = esql.executeQueryAndReturnResult(query);
+         if (result.size() <= 0) {    
+            System.out.println("No orders made"); 
+         } 
+         else {
+            for (int i=0; i<=4; ++i) System.out.println(i+1 + ") " + result.get(i).get(0));
+            System.out.println("-------------------------------\n");
+         }
+      } catch(Exception e) {
+         System.err.println (e.getMessage());
+      }
+   }
    public static void viewOrderInfo(GameRental esql) {}
    public static void viewTrackingInfo(GameRental esql) {}
    public static void updateTrackingInfo(GameRental esql) {}
