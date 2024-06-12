@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.lang.Math;
+import java.util.Date;
 
 /**
  * This class defines a simple embedded SQL utility class that is designed to
@@ -61,7 +62,7 @@ public class GameRental {
 
          // obtain a physical connection
          this._connection = DriverManager.getConnection(url, user, passwd);
-         System.out.println("Done");
+         System.out.println("Done\n");
       }catch (Exception e){
          System.err.println("Error - Unable to Connect to Database: " + e.getMessage() );
          System.out.println("Make sure you started postgres on this machine");
@@ -329,7 +330,10 @@ public class GameRental {
    public static void Greeting(){
       System.out.println(
          "\n\n*******************************************************\n" +
-         "              User Interface      	               \n" +
+         "*                                                     *\n" +
+         "*                       RE:Game      	              *\n" + 
+         "*          By: Sunny Atalig & Isaiah Bernardino       *\n" +
+         "*                                                     *\n" +
          "*******************************************************\n");
    }//end Greeting
 
@@ -344,6 +348,7 @@ public class GameRental {
          System.out.print("Please make your choice: ");
          try { // read the integer, parse it and break.
             input = Integer.parseInt(in.readLine());
+            System.out.println("");
             break;
          }catch (Exception e) {
             System.out.println("Your input is invalid!");
@@ -425,7 +430,7 @@ public class GameRental {
       pword = input;
 
       try {
-         String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer',NULL,'"+phone+"',0);";
+         String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer','','"+phone+"',0);";
          esql.executeUpdate(update);
       } catch(Exception e) {
          System.out.print("Something went wrong.\n");
@@ -446,15 +451,15 @@ public class GameRental {
       Scanner reader = new Scanner(System.in);  
       String username;
       String password;
-      System.out.print("Enter username:");
+      System.out.print("Enter username: ");
       username = reader.next();
-      System.out.print("Enter password:");
+      System.out.print("Enter password: ");
       password = reader.next();
       
       String sql = "SELECT * FROM USERS WHERE login = '" +username+"' AND password = '"+password+"';";
       try {
          if ( esql.executeQuery(sql) > 0) {
-            System.out.print("Log In Success.\n");
+            System.out.print("Log In Success.\n\n");
             return username;
          }
          else {
@@ -483,12 +488,16 @@ public class GameRental {
          System.out.println("Something went wrong.\n");
          return;
       }
-      System.out.println(new String("Phone Number: "+items.get(0).get(0)));
-      System.out.println(new String("Number of Overdue Games: "+items.get(0).get(1)));
-      System.out.println(new String("Favourite Games: \n"+items.get(0).get(2)));
-
+      for(int i = 0; i < items.get(0).get(2).length()+13; i++) System.out.print("-");
+      System.out.println("\n          Profile\n");
+      System.out.println(new String("* Phone Number: "+items.get(0).get(0)));
+      System.out.println(new String("* Number of Overdue Games: "+items.get(0).get(1)));
+      System.out.println(new String("* Favourite Games: "+items.get(0).get(2)));
+      for(int i = 0; i < items.get(0).get(2).length()+13; i++) System.out.print("-");
+      System.out.println("\n");
    }
    public static void updateProfile(GameRental esql) {
+      System.out.println("------------------------------------------\n");
       System.out.println("Choose which entry to update:");
       System.out.println("1. Phone number");
       System.out.println("2. Favourite Games");
@@ -498,12 +507,15 @@ public class GameRental {
       switch(input) {
          case 1:
             change_phone(esql);
+            System.out.println("------------------------------------------\n");
             break;
          case 2:
             change_fav_games(esql);
+            System.out.println("------------------------------------------\n");
             break;
          case 3:
             change_password(esql);
+            System.out.println("------------------------------------------\n");
             break;
          default:
             System.out.println("Something went wrong.\n");
@@ -522,6 +534,7 @@ public class GameRental {
       String sql_max_price;
       String sql_sort;
 
+      System.out.println("-------------------------------------------------------------\n");
       System.out.println("Filter game by genre (press enter for no filter):");
       genre = reader.nextLine();
       System.out.println("Filter game by minimum price (press enter for no filter):");
@@ -542,6 +555,7 @@ public class GameRental {
 
       try {
          esql.executeQueryAndPrintResult(sql);
+         System.out.println("-------------------------------------------------------------\n");
       } catch(Exception e) {
          System.out.print("Something went wrong.\n");
       }
@@ -556,6 +570,7 @@ public class GameRental {
       int acc = 0;
       float total = 0;
       do {
+         System.out.println("--------------------------------------------------------------\n");
          System.out.println("Please add a game id to order (press enter to continue):\n");
          input = reader.nextLine();
          if (input.equals("")) break;
@@ -626,14 +641,366 @@ public class GameRental {
       System.out.println(Integer.toString(acc));
       System.out.print("Total price: ");
       System.out.println(String.format("%.2f", total));
-      System.out.println();
+      System.out.println("--------------------------------------------------------------\n");
    }
-   public static void viewAllOrders(GameRental esql) {}
-   public static void viewRecentOrders(GameRental esql) {}
-   public static void viewOrderInfo(GameRental esql) {}
-   public static void viewTrackingInfo(GameRental esql) {}
-   public static void updateTrackingInfo(GameRental esql) {}
-   public static void updateCatalog(GameRental esql) {}
+   public static void viewAllOrders(GameRental esql) {
+      List<List<String>> result;
+      try{
+         System.out.println("\n-------------------------------");
+         System.out.println("Order history\n");
+         String query = "SELECT rentalOrderID FROM RentalOrder WHERE login='"+esql.loginUser+"';";
+               // String check = "SELECT * FROM Users WHERE login='"+esql.loginUser+"' AND role='manager';";
+
+         result = esql.executeQueryAndReturnResult(query);
+         if (result.size() <= 0) {    
+            System.out.println("No orders made"); 
+         } 
+         else {
+            for (int i=0; i<=result.size()-1; ++i) System.out.println("* " + result.get(i).get(0));
+            System.out.println("-------------------------------\n");
+         }
+      } catch(Exception e) {
+         System.err.println (e.getMessage());
+      }
+   }
+   public static void viewRecentOrders(GameRental esql) {
+      List<List<String>> result;
+      try{
+         System.out.println("\n-------------------------------");
+         System.out.println("Recent orders\n");
+         String query = "SELECT rentalOrderID FROM RentalOrder WHERE login='"+esql.loginUser+"' ORDER BY orderTimestamp DESC;";
+               // String check = "SELECT * FROM Users WHERE login='"+esql.loginUser+"' AND role='manager';";
+
+         result = esql.executeQueryAndReturnResult(query);
+         if (result.size() <= 0) {    
+            System.out.println("No rental orders made"); 
+         } 
+         else {
+            for (int i=0; i<=4; ++i) System.out.println(i+1 + ") " + result.get(i).get(0));
+            System.out.println("-------------------------------\n");
+         }
+      } catch(Exception e) {
+         System.err.println (e.getMessage());
+      }
+   }
+   public static void viewOrderInfo(GameRental esql) {
+      Scanner reader = new Scanner(System.in);  
+      List<List<String>> result;
+      List<String> gameList = new ArrayList<String>();
+      String query;
+      try{
+         System.out.println("-------------------------------\n");
+         do {
+            System.out.print("Please enter rental order ID (format as \"gamerentalorder<num>\" e.g. gamerentalorder1004, enter 'b' to go back):\n > ");
+            String roID = reader.next();
+            if(roID.matches("gamerentalorder[0123456789]+")) {
+               query = "SELECT r.orderTimestamp, r.dueDate, r.totalPrice, t.trackingID, c.gameName FROM RentalOrder r, GamesInOrder g, TrackingInfo t, Catalog c WHERE r.login= '"+esql.loginUser+"' AND t.rentalOrderID=r.rentalOrderID AND r.rentalOrderID= '"+roID+"' AND r.rentalOrderID=g.rentalOrderID AND g.gameID=c.gameID;";
+               result = esql.executeQueryAndReturnResult(query);
+               if(result.size() <= 0) {
+                  System.out.println("Could not find " + roID);
+               }
+               else {
+                  for(int i = 0; i <= result.size()-1; ++i) gameList.add(result.get(i).get(4));
+                  System.out.println("\nTracking ID: " + result.get(0).get(3));
+                  System.out.println("Order Timestamp: " + result.get(0).get(0));
+                  System.out.print("Games: ");
+                  for(int i = 0; i <= gameList.size()-2; ++i) System.out.print(gameList.get(i) + ", ");
+                  System.out.println(gameList.get(gameList.size()-1));
+                  System.out.println("Due Date: " + result.get(0).get(1));
+                  System.out.println("Total Price: " + result.get(0).get(2) + "\n");
+               }
+            }
+            else if(roID.matches("b")){
+               System.out.println("-------------------------------\n");
+               break;
+            }
+            else{
+               System.out.println("Input doesn't match format specified");
+            }
+            
+         } while(true);
+      } catch(Exception e) {
+         System.err.println (e.getMessage());
+      }
+   }
+   public static void viewTrackingInfo(GameRental esql) {
+      Scanner reader = new Scanner(System.in);  
+      List<List<String>> result;
+      String query;
+      try{
+         System.out.println("-------------------------------\n");
+         do {
+            System.out.print("Please enter tracking ID (format as \"trackingid<num>\" e.g. trackingid1004, enter 'b' to go back):\n > ");
+            String tID = reader.next();
+            if(tID.matches("trackingid[0123456789]+")) {
+               query = "SELECT t.rentalOrderID, t.courierName, t.currentLocation, t.status, t.lastUpdateDate, t.additionalComments FROM TrackingInfo t, RentalOrder r WHERE t.rentalOrderID=r.rentalOrderID AND r.login= '"+esql.loginUser+"' AND t.trackingID= '"+tID+"' ;";
+               result = esql.executeQueryAndReturnResult(query);
+               if(result.size() <= 0) {
+                  System.out.println("Could not find " + tID);
+               }
+               else {
+                  System.out.println("\nRental order ID: " + result.get(0).get(0));
+                  System.out.println("Courier name: " + result.get(0).get(1));
+                  System.out.println("Current location: " + result.get(0).get(2));
+                  System.out.println("Status: " + result.get(0).get(3));
+                  System.out.println("Last updated: " + result.get(0).get(4));
+                  System.out.println("Comments: " + result.get(0).get(5));
+               }
+            }
+            else if(tID.matches("b")){
+               System.out.println("-------------------------------\n");
+               break;
+            }
+            else{
+               System.out.println("Input doesn't match format specified");
+            }
+            
+         } while(true);
+      } catch(Exception e) {
+         System.err.println (e.getMessage());
+      }
+   }
+   public static void updateTrackingInfo(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String check = "SELECT * FROM Users WHERE login='"+esql.loginUser+"' AND role!='customer';";
+      try{
+         if(esql.executeQuery(check) <=0) {
+            System.out.println("Unauthorized user.\n");
+            return;
+         }
+      } catch(Exception e) {
+         System.out.println("Something went wrong.\n");
+         return;
+      }
+
+      System.out.print("Enter user tracking id you wish to update (format as \"trackingid<num>\" e.g. trackingid1004):\n > ");
+      String tID = reader.nextLine();
+      String sql = "SELECT * FROM TrackingInfo WHERE trackingID='"+tID+"';";
+      List<List<String>> tracking_info = null;
+      try{
+         tracking_info = esql.executeQueryAndReturnResult(sql);
+
+         if(tracking_info.size() <= 0) {
+            System.out.println("No tracking info matches id.\n");
+            return;
+         }
+      } catch(Exception e) {
+         System.out.println("Something went wrong.\n");
+         return;
+      }
+      System.out.println(new String("\nTracking ID: " + tracking_info.get(0).get(0)));
+      System.out.println(new String("Rental order ID: " + tracking_info.get(0).get(1)));
+      System.out.println(new String("Status: "+ tracking_info.get(0).get(2)));
+      System.out.println(new String("Current location: " + tracking_info.get(0).get(3)));
+      System.out.println(new String("Courier name: " + tracking_info.get(0).get(4)));
+      System.out.println(new String("Last updated: " + tracking_info.get(0).get(5)));
+      System.out.println(new String("Comments: " + tracking_info.get(0).get(6)));
+
+      int choice = 0;
+      do {
+         System.out.println("Choose which item to update");
+         System.out.println("1. status");
+         System.out.println("2. current location");
+         System.out.println("3. courier name");
+         System.out.println("4. comments");
+         System.out.println("0. exit");
+         choice = readChoice();
+
+         String update;
+         String timeStamp;
+
+         switch(choice) {
+            case 1:
+               System.out.print("Enter new status:\n > ");
+               String newStat = reader.nextLine();
+               timeStamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+
+               update = "UPDATE TrackingInfo SET lastUpdateDate='"+timeStamp+"', status='"+newStat+"' WHERE trackingID = '"+tID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("status updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;
+            
+            case 2:
+               System.out.print("Enter new current location:\n > ");
+               String newCurLoc = reader.nextLine();
+               timeStamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+
+               update = "UPDATE TrackingInfo SET lastUpdateDate='"+timeStamp+"', currentLocation='"+newCurLoc+"' WHERE trackingID = '"+tID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("current location updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;        
+
+            case 3:
+               System.out.print("Enter new courier name:\n > ");
+               String newCourName = reader.nextLine();
+               timeStamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+
+               update = "UPDATE TrackingInfo SET lastUpdateDate='"+timeStamp+"', courierName='"+newCourName+"' WHERE trackingID = '"+tID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("courier name updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;  
+
+            case 4:
+               System.out.print("Enter new comments:\n > ");
+               String newComm = reader.nextLine();
+               timeStamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+
+               update = "UPDATE TrackingInfo SET lastUpdateDate='"+timeStamp+"', additionalComments='"+newComm+"' WHERE trackingID = '"+tID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("comments updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;         
+
+            case 0:
+            System.out.println("Exiting....\n");
+            break;
+
+            default:
+            System.out.println("Invalid choice.\n");
+            break;
+         }
+      } while(choice != 0);
+   }
+   public static void updateCatalog(GameRental esql) {
+      Scanner reader = new Scanner(System.in);
+      String check = "SELECT * FROM Users WHERE login='"+esql.loginUser+"' AND role='manager';";
+      try{
+         if(esql.executeQuery(check) <=0) {
+            System.out.println("Unauthorized user.\n");
+            return;
+         }
+      } catch(Exception e) {
+         System.out.println("Something went wrong.\n");
+         return;
+      }
+
+      System.out.print("Enter user game id you wish to update (format as \"game<num>\" e.g. game0350):\n > ");
+      String gID = reader.nextLine();
+      String sql = "SELECT * FROM Catalog WHERE gameID='"+gID+"';";
+      List<List<String>> game_info = null;
+      try{
+         game_info = esql.executeQueryAndReturnResult(sql);
+
+         if(game_info.size() <= 0) {
+            System.out.println("No game info matches id.\n");
+            return;
+         }
+      } catch(Exception e) {
+         System.out.println("Something went wrong.\n");
+         return;
+      }
+
+      System.out.println(new String("\nGame ID: " + game_info.get(0).get(0)));
+      System.out.println(new String("Name: " + game_info.get(0).get(1)));
+      System.out.println(new String("Genre: "+ game_info.get(0).get(2)));
+      System.out.println(new String("Price: " + game_info.get(0).get(3)));
+      System.out.println(new String("Description: " + game_info.get(0).get(4)));
+      System.out.println(new String("imageURL: " + game_info.get(0).get(5)));
+
+      int choice = 0;
+      do {
+         System.out.println("Choose which item to update");
+         System.out.println("1. name");
+         System.out.println("2. genre");
+         System.out.println("3. price");
+         System.out.println("4. description");
+         System.out.println("5. imageURL");
+         System.out.println("0. exit");
+         choice = readChoice();
+
+         String update;
+
+         switch(choice) {
+            case 1:
+               System.out.print("Enter new game name:\n > ");
+               String newName = reader.nextLine();
+
+               update = "UPDATE Catalog SET gameName='"+newName+"' WHERE  gameID='"+gID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("game name updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;
+            
+            case 2:
+               System.out.print("Enter new genre:\n > ");
+               String newGenre = reader.nextLine();
+
+               update = "UPDATE Catalog SET genre='"+newGenre+"' WHERE gameID = '"+gID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("genre updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;        
+
+            case 3:
+               System.out.print("Enter new price:\n > ");
+               String newPrice = reader.nextLine();
+
+               update = "UPDATE Catalog SET price='"+newPrice+"' WHERE gameID = '"+gID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("price updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;  
+
+            case 4:
+               System.out.print("Enter new description:\n > ");
+               String newDesc = reader.nextLine();
+
+               update = "UPDATE Catalog SET description='"+newDesc+"' WHERE gameID = '"+gID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("description updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;       
+
+            case 5:
+               System.out.print("Enter new image URL:\n > ");
+               String newImgURL = reader.nextLine();
+
+               update = "UPDATE Catalog SET imageURL='"+newImgURL+"' WHERE gameID = '"+gID+"';";
+               try {
+                  esql.executeUpdate(update);
+                  System.out.println("image url updated.");
+               } catch(Exception e) {
+                  System.out.println("Something went wrong.");
+               }
+            break;  
+
+            case 0:
+            System.out.println("Exiting....\n");
+            break;
+
+            default:
+            System.out.println("Invalid choice.\n");
+            break;
+         }
+      } while(choice != 0);
+   }
    public static void updateUser(GameRental esql) {
       Scanner reader = new Scanner(System.in);
       String check = "SELECT * FROM Users WHERE login='"+esql.loginUser+"' AND role='manager';";
