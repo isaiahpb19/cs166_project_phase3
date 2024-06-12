@@ -430,7 +430,7 @@ public class GameRental {
       pword = input;
 
       try {
-         String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer',NULL,'"+phone+"',0);";
+         String update = "INSERT INTO Users VALUES('"+login+"','"+pword+"','customer','','"+phone+"',0);";
          esql.executeUpdate(update);
       } catch(Exception e) {
          System.out.print("Something went wrong.\n");
@@ -868,6 +868,7 @@ public class GameRental {
 
             case 0:
             System.out.println("Exiting....\n");
+            break;
 
             default:
             System.out.println("Invalid choice.\n");
@@ -992,6 +993,7 @@ public class GameRental {
 
             case 0:
             System.out.println("Exiting....\n");
+            break;
 
             default:
             System.out.println("Invalid choice.\n");
